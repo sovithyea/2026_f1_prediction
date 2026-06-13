@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 from typing import Optional
 
-from config import (
+from .config import (
     DRIVERS_DF,
     TEAM_PERFORMANCE_2026,
     DRIVER_MODIFIER,
@@ -123,7 +123,7 @@ def synthetic_quali(race_config: dict) -> pd.DataFrame:
         code       = row["DriverCode"]
         team_score = TEAM_PERFORMANCE_2026.get(row["Team"], 7.0)
         modifier   = DRIVER_MODIFIER.get(code, 0.0)
-        # Higher combined score -> smaller offset from base time -> faster lap
+        # Higher combined score → smaller offset from base time → faster lap
         pace_offset = (10.0 - (team_score + modifier)) * 0.35
         q_time = base_time + pace_offset + rng.normal(0, 0.12)
         rows.append({"DriverCode": code, "QualifyingTime": q_time})

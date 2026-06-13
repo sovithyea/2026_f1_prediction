@@ -9,17 +9,17 @@ Qualifying    : Real 2026 times entered below (post-session)
 Race result   : RUS > ANT > LEC > HAM > NOR (actual — for validation)
 
 Run:
-    python australia.py
+    python races/australia.py
 """
 
 import os
 import sys
 import pandas as pd
 
-# Allow running from any working directory
-sys.path.insert(0, os.path.dirname(__file__))
+# Resolve project root so this file runs from anywhere
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from predictor import run
+from core.predictor import run
 
 # ---------------------------------------------------------------------------
 # 2026 Australian GP — actual qualifying times (7 March 2026)
@@ -59,10 +59,12 @@ QUALIFYING_2026 = pd.DataFrame([
     {"DriverCode": "VER", "QualifyingTime": 82.500},   # no time in Q1 (crash) → P20
 ])
 
+# ---------------------------------------------------------------------------
 # Race configuration
+# ---------------------------------------------------------------------------
 RACE_CONFIG = {
     "round_2026":      1,
-    "round_train":     1,          # 2025 Australian GP (same circuit)
+        "training_rounds":  [],
     "race_name":       "Australian GP",
     "base_lap_time":   85.0,       # Albert Park ~1:25 average race lap
     "RainProbability": 0.10,       # Partly cloudy, dry race
@@ -70,45 +72,47 @@ RACE_CONFIG = {
     "qualifying_2026": QUALIFYING_2026,
 }
 
+# ---------------------------------------------------------------------------
 # Actual 2026 race result — used for post-race accuracy check
+# ---------------------------------------------------------------------------
 ACTUAL_RESULT = {
     1:  "RUS",   # George Russell     (Mercedes)
     2:  "ANT",   # Kimi Antonelli     (Mercedes)
     3:  "LEC",   # Charles Leclerc    (Ferrari)
     4:  "HAM",   # Lewis Hamilton     (Ferrari)
     5:  "NOR",   # Lando Norris       (McLaren)
-    "DNS": "PIA",   # Piastri — crashed on formation lap
+    "DNS": "PIA",           # Piastri — crashed on formation lap
     "DNF": ["HAD", "BOT"],  # Hadjar (technical), Bottas (pitlane)
 }
 
+# ---------------------------------------------------------------------------
 # Run prediction
+# ---------------------------------------------------------------------------
 if __name__ == "__main__":
     results, model, mae = run(
         race_config=RACE_CONFIG,
-        training_year=2025,
         verbose=True,
-        save_chart=os.path.join(os.path.dirname(__file__), "charts", "australia.png"),
+        save_chart=os.path.join(os.path.dirname(__file__), "..", "charts", "australia.png"),
     )
 
-    #  Post-race accuracy check 
+    # Post-race accuracy check
     print("\n" + "=" * 60)
     print("   Prediction vs Actual (Top 5)")
     print("=" * 60)
     print(f"  {'Pos':<4} {'Predicted':<20} {'Actual':<20} {'Match'}")
     print("  " + "─" * 56)
 
-    actual_order = [ACTUAL_RESULT[i] for i in range(1, 6)]
+    actual_order   = [ACTUAL_RESULT[i] for i in range(1, 6)]
     predicted_order = results["DriverCode"].tolist()
 
     for pos in range(1, 6):
-        pred_code   = predicted_order[pos - 1] if pos - 1 < len(predicted_order) else "—"
+        pred_code  = predicted_order[pos - 1] if pos - 1 < len(predicted_order) else "—"
         actual_code = actual_order[pos - 1]
-        match       = "Correct" if pred_code == actual_code else "Wrong"
-        pred_name   = results.loc[results["DriverCode"] == pred_code, "FullName"].values
-        pred_name   = pred_name[0] if len(pred_name) else pred_code
+        match      = "Correct" if pred_code == actual_code else "Wrong"
+        pred_name  = results.loc[results["DriverCode"] == pred_code, "FullName"].values
+        pred_name  = pred_name[0] if len(pred_name) else pred_code
         print(f"  P{pos:<3} {pred_name:<20} {actual_code:<20} {match}")
 
-    # Top-1 accuracy
     top1_correct = predicted_order[0] == ACTUAL_RESULT[1]
-    print(f"\n  Winner prediction: {' Correct' if top1_correct else ' Wrong'}")
+    print(f"\n  Winner prediction: {'Correct' if top1_correct else 'Wrong'}")
     print(f"  Model MAE: {mae:.2f}s")

@@ -7,8 +7,9 @@ Import from here instead of hard-coding in any prediction script.
 
 import pandas as pd
 
+# ---------------------------------------------------------------------------
 # 2026 Driver grid  (22 drivers, 11 teams)
-
+# ---------------------------------------------------------------------------
 DRIVERS_2026 = [
     # (DriverCode, FullName,            Team,           TeamCode)
     ("NOR", "Lando Norris",       "McLaren",       "MCL"),
@@ -39,9 +40,10 @@ DRIVERS_DF = pd.DataFrame(
     DRIVERS_2026, columns=["DriverCode", "FullName", "Team", "TeamCode"]
 )
 
+# ---------------------------------------------------------------------------
 # 2026 Race Calendar — 24 rounds
 # Sprint weekends flagged separately
-
+# ---------------------------------------------------------------------------
 CALENDAR_2026 = [
     # (Round, Name,             Circuit,                        Country,        Date,         Sprint)
     (1,  "Australian GP",       "Albert Park",                  "Australia",    "2026-03-08", False),
@@ -75,21 +77,22 @@ CALENDAR_DF = pd.DataFrame(
     columns=["Round", "Name", "Circuit", "Country", "Date", "Sprint"]
 )
 
+# ---------------------------------------------------------------------------
 # Team constructor performance scores — 2026 new-era baseline
 # Scale: 0–10  (from 2025 standings + new-regs reset estimate)
-
+# ---------------------------------------------------------------------------
 TEAM_PERFORMANCE_2026 = {
-    "McLaren":      9.5,
-    "Ferrari":      9.0,
-    "Red Bull":     8.8,
-    "Mercedes":     8.7,
-    "Aston Martin": 7.8,
+    "McLaren":      8.5,
+    "Ferrari":      8.9,
+    "Red Bull":     8.6,
+    "Mercedes":     9.2,
+    "Aston Martin": 4.0,
     "Williams":     7.5,
-    "Racing Bulls": 7.2,
+    "Racing Bulls": 8.0,
     "Haas":         6.8,
     "Alpine":       6.5,
     "Audi":         6.0,   # new manufacturer, regulation reset
-    "Cadillac":     5.5,   # brand-new 11th constructor
+    "Cadillac":     4.5,   # brand-new 11th constructor
 }
 
 # Per-driver modifier added on top of team score
@@ -97,37 +100,38 @@ TEAM_PERFORMANCE_2026 = {
 DRIVER_MODIFIER = {
     "NOR": +0.25, "PIA": +0.20,
     "HAM": +0.30, "LEC": +0.25,
-    "VER": +0.40, "HAD": -0.10,   # second season
-    "RUS": +0.15, "ANT": +0.05,   # second season
+    "VER": +0.40, "HAD": -0.10,   
+    "RUS": +0.15, "ANT": +0.05,   
     "ALB": +0.10, "SAI": +0.20,
-    "HUL": +0.10, "BOR": -0.10,   # second season
+    "HUL": +0.10, "BOR": -0.10,   
     "ALO": +0.20, "STR": +0.00,
     "GAS": +0.10, "COL": -0.05,
-    "OCO": +0.05, "BEA": -0.05,   # second season
+    "OCO": +0.05, "BEA": -0.05,
     "LAW": +0.05, "LIN": -0.20,   # rookie
     "PER": +0.05, "BOT": +0.05,
 }
 
-# FastF1 3-letter codes used in 2025 -> 2026 equivalents
+# FastF1 3-letter codes used in 2025 → 2026 equivalents
 # (used to remap training data when a seat changed hands)
 CODE_MAP_2025_TO_2026 = {
     "NOR": "NOR", "PIA": "PIA",
     "HAM": "HAM", "LEC": "LEC",
-    "VER": "VER", "TSU": "HAD",   # Tsunoda out -> Hadjar in
+    "VER": "VER", "TSU": "HAD",   # Tsunoda out → Hadjar in
     "RUS": "RUS", "ANT": "ANT",
     "ALB": "ALB", "SAI": "SAI",
     "HUL": "HUL", "BOR": "BOR",
     "ALO": "ALO", "STR": "STR",
     "GAS": "GAS", "COL": "COL",
     "OCO": "OCO", "BEA": "BEA",
-    "LAW": "LAW", "HAD": "LIN",   # Hadjar's 2025 RB slot -> Lindblad
+    "LAW": "LAW", "HAD": "LIN",   # Hadjar's 2025 RB slot → Lindblad
     "PER": "PER", "BOT": "BOT",
     # Drivers not continuing — map to None (rows are dropped)
     "MAG": None, "GIO": None, "ZHO": None,
 }
 
+# ---------------------------------------------------------------------------
 # Team colours for plots
-
+# ---------------------------------------------------------------------------
 TEAM_COLORS = {
     "McLaren":      "#FF8000",
     "Ferrari":      "#E8002D",
@@ -142,8 +146,9 @@ TEAM_COLORS = {
     "Cadillac":     "#B87333",
 }
 
-# GBR hyperparameters
-
+# ---------------------------------------------------------------------------
+# GBR hyperparameters (Gradient Boosting Regressor)
+# ---------------------------------------------------------------------------
 GBR_PARAMS = {
     "n_estimators":    300,
     "learning_rate":   0.05,
