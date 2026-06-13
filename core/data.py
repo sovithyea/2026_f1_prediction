@@ -120,15 +120,28 @@ def get_weather(year: int, gp: int | str, session_type: str = "R") -> dict:
 def get_round_data(year: int, gp: int | str) -> dict | None:
     """
     Fetch all data needed to build training features for one completed round.
-    Returns dict with keys: qualifying, sectors, positions, weather
+    Returns dict with keys: qualifying, fp1, fp2, fp3, positions, weather
     Returns None if the round can't be loaded.
     """
     try:
+        quali     = get_qualifying(year, gp)
+        positions = get_race_positions(year, gp)
+        weather   = get_weather(year, gp)
+
+        # FP sessions — fail gracefully (wet/cancelled sessions return empty df)
+        def safe_fp(session_type: str) -> pd.DataFrame:
+            try:
+                return get_fp_laps(year, gp, session_type)
+            except Exception:
+                return pd.DataFrame(columns=["DriverCode", "FPTime"])
+
         return {
-            "qualifying": get_qualifying(year, gp),
-            "sectors":    get_sector_times(year, gp),
-            "positions":  get_race_positions(year, gp),
-            "weather":    get_weather(year, gp),
+            "qualifying": quali,
+            "fp1":        safe_fp("FP1"),
+            "fp2":        safe_fp("FP2"),
+            "fp3":        safe_fp("FP3"),
+            "positions":  positions,
+            "weather":    weather,
         }
     except Exception as e:
         print(f"  [data] Warning: could not load {year} round {gp}: {e}")

@@ -1,0 +1,23 @@
+Race,Round,SpeedSource,MAE,Position,DriverCode,FullName,Team,PredictedRaceTime (s)
+Monaco GP,6,qualifying,4.99s,1,ANT,Kimi Antonelli,Mercedes,74.5
+Monaco GP,6,qualifying,4.99s,2,LEC,Charles Leclerc,Ferrari,74.9
+Monaco GP,6,qualifying,4.99s,3,GAS,Pierre Gasly,Alpine,75.3
+Monaco GP,6,qualifying,4.99s,4,NOR,Lando Norris,McLaren,75.7
+Monaco GP,6,qualifying,4.99s,5,LAW,Liam Lawson,Racing Bulls,76.1
+Monaco GP,6,qualifying,4.99s,6,HUL,Nico Hulkenberg,Audi,76.5
+Monaco GP,6,qualifying,4.99s,7,SAI,Carlos Sainz,Williams,76.9
+Monaco GP,6,qualifying,4.99s,8,VER,Max Verstappen,Red Bull,77.3
+Monaco GP,6,qualifying,4.99s,9,ALB,Alex Albon,Williams,77.7
+Monaco GP,6,qualifying,4.99s,10,HAD,Isack Hadjar,Red Bull,78.1
+Monaco GP,6,qualifying,4.99s,11,OCO,Esteban Ocon,Haas,78.5
+Monaco GP,6,qualifying,4.99s,12,RUS,George Russell,Mercedes,78.9
+Monaco GP,6,qualifying,4.99s,13,BEA,Oliver Bearman,Haas,79.3
+Monaco GP,6,qualifying,4.99s,14,BOR,Gabriel Bortoleto,Audi,79.7
+Monaco GP,6,qualifying,4.99s,15,COL,Franco Colapinto,Alpine,80.1
+Monaco GP,6,qualifying,4.99s,16,HAM,Lewis Hamilton,Ferrari,80.5
+Monaco GP,6,qualifying,4.99s,17,LIN,Arvid Lindblad,Racing Bulls,80.9
+Monaco GP,6,qualifying,4.99s,18,STR,Lance Stroll,Aston Martin,81.3
+Monaco GP,6,qualifying,4.99s,19,PIA,Oscar Piastri,McLaren,81.7
+Monaco GP,6,qualifying,4.99s,20,BOT,Valtteri Bottas,Cadillac,82.1
+Monaco GP,6,qualifying,4.99s,21,PER,Sergio Perez,Cadillac,82.5
+Monaco GP,6,qualifying,4.99s,22,ALO,Fernando Alonso,Aston Martin,82.9

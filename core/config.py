@@ -82,17 +82,17 @@ CALENDAR_DF = pd.DataFrame(
 # Scale: 0–10  (from 2025 standings + new-regs reset estimate)
 # ---------------------------------------------------------------------------
 TEAM_PERFORMANCE_2026 = {
-    "McLaren":      8.5,
-    "Ferrari":      8.9,
-    "Red Bull":     8.6,
-    "Mercedes":     9.2,
-    "Aston Martin": 4.0,
+    "McLaren":      9.5,
+    "Ferrari":      9.0,
+    "Red Bull":     8.8,
+    "Mercedes":     8.7,
+    "Aston Martin": 7.8,
     "Williams":     7.5,
-    "Racing Bulls": 8.0,
+    "Racing Bulls": 7.2,
     "Haas":         6.8,
     "Alpine":       6.5,
     "Audi":         6.0,   # new manufacturer, regulation reset
-    "Cadillac":     4.5,   # brand-new 11th constructor
+    "Cadillac":     5.5,   # brand-new 11th constructor
 }
 
 # Per-driver modifier added on top of team score
@@ -100,10 +100,10 @@ TEAM_PERFORMANCE_2026 = {
 DRIVER_MODIFIER = {
     "NOR": +0.25, "PIA": +0.20,
     "HAM": +0.30, "LEC": +0.25,
-    "VER": +0.40, "HAD": -0.10,   
-    "RUS": +0.15, "ANT": +0.05,   
+    "VER": +0.40, "HAD": -0.10,   # rookie
+    "RUS": +0.15, "ANT": -0.05,   # second season
     "ALB": +0.10, "SAI": +0.20,
-    "HUL": +0.10, "BOR": -0.10,   
+    "HUL": +0.10, "BOR": -0.10,   # rookie
     "ALO": +0.20, "STR": +0.00,
     "GAS": +0.10, "COL": -0.05,
     "OCO": +0.05, "BEA": -0.05,
@@ -147,7 +147,7 @@ TEAM_COLORS = {
 }
 
 # ---------------------------------------------------------------------------
-# GBR hyperparameters (Gradient Boosting Regressor)
+# GBR hyperparameters (same as mar-antaya reference repo)
 # ---------------------------------------------------------------------------
 GBR_PARAMS = {
     "n_estimators":    300,
@@ -160,10 +160,12 @@ GBR_PARAMS = {
 
 # Feature columns the model trains and predicts on
 FEATURE_COLS = [
-    "QualifyingTime",
+    "QualifyingTime",           # gap from pole (normalized)
+    "FP1Time",                  # FP1 best lap gap (normalized)
+    "FP2Time",                  # FP2 best lap / long-run gap (normalized)
+    "FP3Time",                  # FP3 best lap gap (normalized)
+    "TeamPerformanceScore",
     "RainProbability",
     "Temperature",
-    "TeamPerformanceScore",
-    "TotalSectorTime (s)",
     "AverageSeasonPerformance",
 ]

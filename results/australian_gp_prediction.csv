@@ -1,0 +1,23 @@
+Race,Round,SpeedSource,MAE,Position,DriverCode,FullName,Team,PredictedRaceTime (s)
+Australian GP,1,qualifying,N/A,1,RUS,George Russell,Mercedes,85.0
+Australian GP,1,qualifying,N/A,2,ANT,Kimi Antonelli,Mercedes,85.4
+Australian GP,1,qualifying,N/A,3,HAD,Isack Hadjar,Red Bull,85.8
+Australian GP,1,qualifying,N/A,4,LEC,Charles Leclerc,Ferrari,86.2
+Australian GP,1,qualifying,N/A,5,PIA,Oscar Piastri,McLaren,86.6
+Australian GP,1,qualifying,N/A,6,NOR,Lando Norris,McLaren,87.0
+Australian GP,1,qualifying,N/A,7,HAM,Lewis Hamilton,Ferrari,87.4
+Australian GP,1,qualifying,N/A,8,SAI,Carlos Sainz,Williams,87.8
+Australian GP,1,qualifying,N/A,9,ALO,Fernando Alonso,Aston Martin,88.2
+Australian GP,1,qualifying,N/A,10,BEA,Oliver Bearman,Haas,88.6
+Australian GP,1,qualifying,N/A,11,STR,Lance Stroll,Aston Martin,89.0
+Australian GP,1,qualifying,N/A,12,OCO,Esteban Ocon,Haas,89.4
+Australian GP,1,qualifying,N/A,13,LAW,Liam Lawson,Racing Bulls,89.8
+Australian GP,1,qualifying,N/A,14,GAS,Pierre Gasly,Alpine,90.2
+Australian GP,1,qualifying,N/A,15,ALB,Alex Albon,Williams,90.6
+Australian GP,1,qualifying,N/A,16,BOR,Gabriel Bortoleto,Audi,91.0
+Australian GP,1,qualifying,N/A,17,HUL,Nico Hulkenberg,Audi,91.4
+Australian GP,1,qualifying,N/A,18,COL,Franco Colapinto,Alpine,91.8
+Australian GP,1,qualifying,N/A,19,LIN,Arvid Lindblad,Racing Bulls,92.2
+Australian GP,1,qualifying,N/A,20,VER,Max Verstappen,Red Bull,92.6
+Australian GP,1,qualifying,N/A,21,PER,Sergio Perez,Cadillac,93.0
+Australian GP,1,qualifying,N/A,22,BOT,Valtteri Bottas,Cadillac,93.4

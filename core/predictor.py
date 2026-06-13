@@ -3,11 +3,14 @@ predictor.py
 ------------
 Pipeline: fetch 2026 completed rounds → train GBR → predict next race.
 
-Target variable: Race Position (1–22).
-Training data:   All completed 2026 rounds specified in training_rounds.
-Prediction:      Real qualifying (or FP2/FP1 pace / synthetic) for the target race.
+Target variable : Race Position (1–22)
+Training data   : All completed 2026 rounds in training_rounds
+Features        : QualifyingTime, FP1Time, FP2Time, FP3Time,
+                  TeamPerformanceScore, RainProbability, Temperature,
+                  AverageSeasonPerformance
 
-Auto-saves prediction CSV to results/<race_name>.csv on every run.
+Speed data priority for prediction (uses best available):
+  qualifying_2026 > fp3_pace > fp2_pace > fp1_pace > synthetic
 """
 
 from __future__ import annotations
@@ -24,7 +27,6 @@ from . import model as m
 from . import viz as v
 from .config import FEATURE_COLS
 
-# Path to results/ folder (two levels up from core/)
 RESULTS_DIR = os.path.join(os.path.dirname(__file__), "..", "results")
 
 
@@ -39,19 +41,25 @@ def run(
 
     race_config required keys
     -------------------------
-    round_2026        int         target race round number
+    round_2026        int
     training_rounds   list[int]   completed 2026 rounds to train on
     race_name         str
-    base_lap_time     float       circuit reference lap in seconds
+    base_lap_time     float
     RainProbability   float
     Temperature       float
 
-    race_config optional speed data (uses best available)
+    race_config speed data (uses best available, all optional)
     -------------------------
-    qualifying_2026   pd.DataFrame   DriverCode, QualifyingTime  ← after qualifying
-    fp3_pace          pd.DataFrame   DriverCode, QualifyingTime  ← after FP3
-    fp2_pace          pd.DataFrame   DriverCode, QualifyingTime  ← after FP2
-    fp1_pace          pd.DataFrame   DriverCode, QualifyingTime  ← after FP1
+    qualifying_2026   pd.DataFrame  DriverCode, QualifyingTime
+    fp3_pace          pd.DataFrame  DriverCode, QualifyingTime
+    fp2_pace          pd.DataFrame  DriverCode, QualifyingTime
+    fp1_pace          pd.DataFrame  DriverCode, QualifyingTime
+
+    FP data for feature columns (optional — imputed from quali if absent)
+    -------------------------
+    fp1_laps          pd.DataFrame  DriverCode, FPTime
+    fp2_laps          pd.DataFrame  DriverCode, FPTime
+    fp3_laps          pd.DataFrame  DriverCode, FPTime
     """
     race_name       = race_config["race_name"]
     training_rounds = race_config.get("training_rounds", [])
@@ -60,35 +68,62 @@ def run(
         print(f"\n{'='*60}")
         print(f"  🏁  2026 {race_name} — ML Prediction")
         print(f"{'='*60}")
-        print(f"  Training rounds : {training_rounds if training_rounds else 'none (team score ranking)'}")
-        print(f"  Rain     : {race_config['RainProbability']:.0%}  |  "
-              f"Temp: {race_config['Temperature']}°C")
+        print(f"  Training rounds : {training_rounds or 'none (team score ranking)'}")
+        print(f"  Rain : {race_config['RainProbability']:.0%}  |  "
+              f"Temp : {race_config['Temperature']}°C")
 
-    # ── 1. Determine best available speed data ────────────────────────────────
-    speed_source, qual_2026 = _best_speed_data(race_config)
+    # ── 1. Best qualifying proxy ──────────────────────────────────────────────
+    qual_source, qual_2026 = _best_speed_data(race_config)
     if verbose:
-        print(f"  Speed source    : {speed_source}")
+        print(f"  Speed source    : {qual_source}")
 
-    # ── 2. Build prediction features ─────────────────────────────────────────
+    # ── 2. FP session data — manual override or auto-fetch from FastF1 ────────
+    fp1 = race_config.get("fp1_laps")
+    fp2 = race_config.get("fp2_laps")
+    fp3 = race_config.get("fp3_laps")
+
+    if any(x is None for x in [fp1, fp2, fp3]) and d.FASTF1_AVAILABLE:
+        rnd = race_config.get("round_2026")
+        if rnd:
+            if verbose:
+                print(f"  Auto-fetching FP data for round {rnd}...")
+            def _safe_fp(session):
+                try:
+                    return d.get_fp_laps(2026, rnd, session)
+                except Exception:
+                    return None
+            fp1 = fp1 or _safe_fp("FP1")
+            fp2 = fp2 or _safe_fp("FP2")
+            fp3 = fp3 or _safe_fp("FP3")
+            fetched = [s for s, v in [("FP1", fp1), ("FP2", fp2), ("FP3", fp3)] if v is not None]
+            if verbose and fetched:
+                print(f"  FP sessions fetched : {', '.join(fetched)}")
+
+    # ── 3. Build prediction features ─────────────────────────────────────────
     if verbose:
         print("\n[1/3] Building prediction features...")
-    sect_2026 = f.synthetic_sectors(qual_2026)
-    pred_df   = f.build_features(qual_2026, sect_2026, race_config, season_perf_df)
-    pred_df   = pred_df.dropna(subset=FEATURE_COLS)
 
-    # ── 3. Train on completed 2026 rounds (if any) ────────────────────────────
-    trained_model = None
-    mae           = None
+    pred_df = f.build_features(
+        qualifying_df  = qual_2026,
+        race_config    = race_config,
+        fp1_df         = fp1,
+        fp2_df         = fp2,
+        fp3_df         = fp3,
+        season_perf_df = season_perf_df,
+    )
+    pred_df = pred_df.dropna(subset=FEATURE_COLS)
+
+    # ── 3. Train on completed 2026 rounds ─────────────────────────────────────
+    trained_model, mae = None, None
 
     if training_rounds:
         if verbose:
             print(f"[2/3] Loading 2026 training data (rounds {training_rounds})...")
-
         train_df = _build_training_df(training_rounds, race_config, season_perf_df, verbose)
 
         if train_df is not None and len(train_df) >= 10:
             if verbose:
-                print(f"       {len(train_df)} training rows across {len(training_rounds)} rounds")
+                print(f"       {len(train_df)} rows  |  features: {FEATURE_COLS}")
                 print("[3/3] Training Gradient Boosting Regressor...")
             trained_model, mae = m.train(
                 train_df[FEATURE_COLS], train_df["Position"], verbose=verbose
@@ -96,29 +131,26 @@ def run(
             pred_df["PredictedPosition"] = trained_model.predict(pred_df[FEATURE_COLS])
         else:
             if verbose:
-                print("       Not enough training data — falling back to team score ranking")
+                print("       Not enough data — falling back to team score ranking")
             pred_df = _rank_by_team_score(pred_df)
     else:
         if verbose:
             print("[2/3] No training rounds — ranking by qualifying + team score")
         pred_df = _rank_by_team_score(pred_df)
 
-    # ── 4. Final ranking ──────────────────────────────────────────────────────
-    pred_df = pred_df.sort_values("PredictedPosition").reset_index(drop=True)
+    # ── 4. Final ranking & display ────────────────────────────────────────────
+    pred_df  = pred_df.sort_values("PredictedPosition").reset_index(drop=True)
     pred_df["Position"] = range(1, len(pred_df) + 1)
 
     base = race_config.get("base_lap_time", 90.0)
     pred_df["PredictedRaceTime (s)"] = base + (pred_df["Position"] - 1) * 0.4
 
     mae_str = f"{mae:.2f}s" if mae is not None else "N/A (no training data)"
-
     if verbose:
         v.print_results(pred_df, race_name, mae_str)
 
     v.plot_results(pred_df, race_name, mae_str, save_path=save_chart)
-
-    # ── 5. Auto-save prediction CSV ───────────────────────────────────────────
-    _save_prediction(pred_df, race_config, speed_source, mae)
+    _save_prediction(pred_df, race_config, qual_source, mae)
 
     return pred_df, trained_model, mae if mae is not None else 0.0
 
@@ -126,7 +158,7 @@ def run(
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _best_speed_data(race_config: dict) -> tuple[str, pd.DataFrame]:
-    """Return (source_label, DataFrame) using best available speed data."""
+    """Return (label, DataFrame) for the best available qualifying proxy."""
     for key, label in [
         ("qualifying_2026", "qualifying"),
         ("fp3_pace",        "FP3 pace"),
@@ -145,30 +177,41 @@ def _build_training_df(
     season_perf_df,
     verbose: bool,
 ) -> pd.DataFrame | None:
-    """Fetch 2026 qualifying + positions for each training round, return combined DataFrame."""
+    """
+    Fetch 2026 qualifying + FP1/FP2/FP3 + race positions for each training round.
+    Builds normalized features and returns one combined DataFrame.
+    """
     frames = []
     for rnd in rounds:
         raw = d.get_round_data(2026, rnd)
         if raw is None:
             continue
+
         feat_df = f.build_features(
-            raw["qualifying"],
-            f.synthetic_sectors(raw["qualifying"]),
-            raw["weather"],
-            season_perf_df,
+            qualifying_df  = raw["qualifying"],
+            race_config    = race_config,
+            fp1_df         = raw.get("fp1"),
+            fp2_df         = raw.get("fp2"),
+            fp3_df         = raw.get("fp3"),
+            season_perf_df = season_perf_df,
         )
         merged = feat_df.merge(
             raw["positions"][["DriverCode", "Position"]], on="DriverCode", how="inner"
         ).dropna(subset=FEATURE_COLS + ["Position"])
+
         if len(merged) > 0:
             frames.append(merged)
             if verbose:
-                print(f"       Round {rnd}: {len(merged)} drivers loaded")
+                fp_available = [s for s in ["fp1", "fp2", "fp3"]
+                                if raw.get(s) is not None and len(raw[s]) > 0]
+                print(f"       Round {rnd}: {len(merged)} drivers  "
+                      f"(sessions: Q + {', '.join(fp_available) or 'none'})")
+
     return pd.concat(frames, ignore_index=True) if frames else None
 
 
 def _rank_by_team_score(pred_df: pd.DataFrame) -> pd.DataFrame:
-    """Fallback ranking: qualifying gap (lower = better) offset by team score."""
+    """Fallback: rank by qualifying gap adjusted by team score."""
     df = pred_df.copy()
     df["PredictedPosition"] = (
         df["QualifyingTime"] * 2.0
@@ -183,9 +226,8 @@ def _save_prediction(
     speed_source: str,
     mae: float | None,
 ) -> None:
-    """Save prediction to results/<race_slug>_prediction.csv."""
+    """Auto-save full prediction to results/<race_slug>_prediction.csv."""
     os.makedirs(RESULTS_DIR, exist_ok=True)
-
     race_name = race_config["race_name"]
     slug      = race_name.lower().replace(" ", "_").replace("/", "_")
     path      = os.path.join(RESULTS_DIR, f"{slug}_prediction.csv")
