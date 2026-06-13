@@ -39,7 +39,7 @@ Missing FP sessions are auto-fetched from FastF1 for completed rounds, or impute
 │   └── predictor.py            main pipeline — called by every race file
 │
 ├── races/                      one file per GP
-│   ├── _template.py            copy this for each new race
+│   ├── template.py            copy this for each new race
 │   ├── australia.py            R1  ✅  RUS wins
 │   ├── china.py                R2  ✅  ANT wins
 │   ├── japan.py                R3  ✅  ANT wins
